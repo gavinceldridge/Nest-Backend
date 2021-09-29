@@ -3,7 +3,17 @@
 //Routes for getting the weather info
 
 const express = require("express");
-const { LAT, LON, WEATHER_API_ID } = require("../configSecret");
+let LAT, LON, WEATHER_API_ID;
+try {
+    const config = require("../configSecret");
+    LAT = config.LAT;
+    LON = config.LON;
+    WEATHER_API_ID = config.WEATHER_API_ID;
+} catch (e) {
+    LAT = process.env.LAT;
+    LON = process.env.LON;
+    WEATHER_API_ID = process.env.WEATHER_API_ID;
+}
 const axios = require("axios");
 const { BadRequestError, ExpressError, NotFoundError } = require("../expressError");
 const router = new express.Router();

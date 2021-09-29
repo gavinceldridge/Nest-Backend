@@ -3,7 +3,30 @@
 //Routes for controlling the thermometer
 
 const express = require("express");
-const { OAUTH_ID, OAUTH_PASSWORD, PROJECT_ID, DEVICE_ID, REFRESH_TOKEN, LAT, LON, WEATHER_API_ID } = require("../configSecret");
+let OAUTH_ID, OAUTH_PASSWORD, PROJECT_ID, DEVICE_ID, REFRESH_TOKEN, LAT, LON, WEATHER_API_ID;
+try {
+
+    const pws = require("../configSecret");
+
+    OAUTH_ID = pws.OAUTH_ID;
+    OAUTH_PASSWORD = pws.OAUTH_PASSWORD;
+    PROJECT_ID = pws.PROJECT_ID;
+    DEVICE_ID = pws.DEVICE_ID;
+    REFRESH_TOKEN = pws.REFRESH_TOKEN;
+    LAT = pws.LAT;
+    LON = pws.LON;
+    WEATHER_API_ID = pws.WEATHER_API_ID;
+
+} catch (e) {
+    OAUTH_ID = process.env.OAUTH_ID;
+    OAUTH_PASSWORD = process.env.OAUTH_PASSWORD;
+    PROJECT_ID = process.env.PROJECT_ID;
+    DEVICE_ID = process.env.DEVICE_ID;
+    REFRESH_TOKEN = process.env.REFRESH_TOKEN;
+    LAT = process.env.LAT;
+    LON = process.env.LON;
+    WEATHER_API_ID = process.env.WEATHER_API_ID;
+}
 const axios = require("axios");
 const { BadRequestError, ExpressError, NotFoundError } = require("../expressError");
 const router = new express.Router();
