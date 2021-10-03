@@ -155,6 +155,18 @@ router.post("/temperature", async (req, res, next) => {
     }
 });
 
+
+/**
+ * Start the automatic timer to check the weather every 30 minutes and compare
+ * the results with the inside temperature
+ * 
+ * START TIMER: {mode: "start"}
+ * END TIMER: {mode: "stop"}
+ * GET CUR STATUS: {mode: ""}
+ * 
+ * RETURN: {response: status}
+ * 
+ */
 router.post("/timer", async (req, res, next) => {
     try {
 
@@ -205,7 +217,7 @@ router.post("/mode", async (req, res, next) => {
         if (!thermostatAccessToken) await getNewToken();
 
         const mode = req.body.mode;
-        console.log(mode);
+        // console.log(mode);
         const data = {
             "command": "sdm.devices.commands.ThermostatMode.SetMode",
             "params": {
@@ -230,7 +242,7 @@ router.get("/", async (req, res, next) => {
         if (!thermostatAccessToken) {
             await getNewToken();
         }
-        console.log(thermostatAccessToken);
+        // console.log(thermostatAccessToken);
 
         let url = `${SMART_DEVICES_URL}/${PROJECT_ID}/devices`;
         const result = await axios.get(url,
