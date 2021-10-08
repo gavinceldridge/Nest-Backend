@@ -42,6 +42,23 @@ const getNewToken = async (refreshToken = REFRESH_TOKEN) => {
     thermostatAccessToken = result.data.access_token;
 }
 
+const getBasicInfo = async () => {
+    if (!thermostatAccessToken) {
+        await getNewToken();
+    }
+    // console.log(thermostatAccessToken);
+
+    let url = `${SMART_DEVICES_URL}/${PROJECT_ID}/devices`;
+    const result = await axios.get(url,
+        {
+            headers: {
+                "Authorization": `Bearer ${thermostatAccessToken}`
+            }
+        });
+
+    return result;
+}
+
 const convertCelsiusToFahrenheit = (cel) => {
     return (cel * (9 / 5) + 32);
 }
@@ -50,28 +67,23 @@ const convertFahrenheitToCelsius = (far) => {
     return (far - 32) * 5 / 9;
 }
 
+//check the current thermostat mode: if it is off, break, otherwise, check the outside temp and compare to the inside temp
 const compareWithWeather = async () => {
     try {
 
-        console.log("checking current weather data...");
-        if (!thermostatAccessToken) await getNewToken();
-
+        //check current thermostat mode:
+        const thermostatResponse = await getBasicInfo();
         //get the current weather
         const weatherResponse = await axios.get(`${BASE_WEATHER_API_URL}?lat=${LAT}&lon=${LON}&appid=${WEATHER_API_ID}&units=imperial`);
-
-        //get the current thermostat data
-        const thermostatResponse = await axios.get(`${SMART_DEVICES_URL}/${PROJECT_ID}/devices`,
-            {
-                headers: {
-                    "Authorization": `Bearer ${thermostatAccessToken}`
-                }
-            });
-
+        const weatherTemp = weatherResponse.data.main.feels_like;
         console.log(weatherResponse.data);
-        console.log(thermostatResponse.data.devices[0].traits['sdm.devices.traits.ThermostatMode']);
-        let weatherTemp = weatherResponse.data.main.feels_like;
+
         if (thermostatResponse.data.devices[0].traits['sdm.devices.traits.ThermostatMode'].mode === "COOL") {
             //if ac is running & climate inside is warmer than outside, turn it off
+
+            console.log("checking current weather data...");
+
+
 
             let thermoTemp = convertCelsiusToFahrenheit(thermostatResponse.data.devices[0].traits['sdm.devices.traits.ThermostatTemperatureSetpoint'].coolCelsius);
             if (thermoTemp && thermoTemp > weatherTemp) {
@@ -85,7 +97,8 @@ const compareWithWeather = async () => {
                 }
                 const headerContent = { Authorization: `Bearer ${thermostatAccessToken}` };
                 await axios.post(`${SMART_DEVICES_URL}/${PROJECT_ID}/devices/${DEVICE_ID}:executeCommand`, data, { headers: headerContent });
-                // console.log(result);
+            } else {
+                console.log('temp outside is warmer than it is inside')
             }
         } else {
             //if ac is not running & climate outside is warmer than the last temperature, turn it on
@@ -102,7 +115,7 @@ const compareWithWeather = async () => {
                 const headerContent = { Authorization: `Bearer ${thermostatAccessToken}` };
                 await axios.post(`${SMART_DEVICES_URL}/${PROJECT_ID}/devices/${DEVICE_ID}:executeCommand`, data, { headers: headerContent });
             } else {
-                console.log("no changes made");
+                console.log("thermostat is already off, no changes made");
             }
         }
     } catch (e) {
@@ -169,7 +182,6 @@ router.post("/temperature", async (req, res, next) => {
  */
 router.post("/timer", async (req, res, next) => {
     try {
-
         const mode = req.body.mode;
 
         if (mode === "start" && !intervalId) {
@@ -184,8 +196,8 @@ router.post("/timer", async (req, res, next) => {
             intervalId = undefined;
         }
 
-        let status = intervalId !== undefined ? "on" : "off";
-        let response = {
+        const status = intervalId !== undefined ? "on" : "off";
+        const response = {
             status
         }
 
@@ -239,18 +251,7 @@ router.get("/", async (req, res, next) => {
 
     try {
 
-        if (!thermostatAccessToken) {
-            await getNewToken();
-        }
-        // console.log(thermostatAccessToken);
-
-        let url = `${SMART_DEVICES_URL}/${PROJECT_ID}/devices`;
-        const result = await axios.get(url,
-            {
-                headers: {
-                    "Authorization": `Bearer ${thermostatAccessToken}`
-                }
-            });
+        const result = await getBasicInfo();
 
         return res.json(result.data);
 
