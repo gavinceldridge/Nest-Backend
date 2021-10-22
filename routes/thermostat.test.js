@@ -33,8 +33,6 @@ describe("Mode switching", () => {
 
 });
 
-
-
 describe("Temp change", () => {
 
     test("can change AC temp", async () => {
@@ -46,13 +44,15 @@ describe("Temp change", () => {
         const modeRes = await request(app).post("/thermostat/mode").send({ mode: "COOL" });
         expect(modeRes.status).toEqual(200);
         const tempRes = await request(app).post("/thermostat/temperature").send({ temperature: 74, command: "SetCool" });
-        console.log(tempRes.body);
-        const infoRes = await request(app).get("/thermostat/");
-        console.log(infoRes.body.devices[0]['traits']['sdm.devices.traits.ThermostatTemperatureSetpoint']);
-        const celsius = infoRes.body.devices[0]['traits']["sdm.devices.traits.ThermostatTemperatureSetpoint"]['coolCelsius'];
-        // console.log(celsius);
-        const resultTemp = cToF(celsius);
-        expect(resultTemp).toEqual(74);
+        // console.log(tempRes.body);
+        setTimeout(async () => {
+            const infoRes = await request(app).get("/thermostat/");
+            // console.log(infoRes.body);
+            const celsius = infoRes.body.devices[0]['traits']["sdm.devices.traits.ThermostatTemperatureSetpoint"]['coolCelsius'];
+            // console.log(celsius);
+            const resultTemp = cToF(celsius);
+            expect(resultTemp).toEqual(74);
+        }, 2000);
 
     });
 
